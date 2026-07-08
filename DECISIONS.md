@@ -1,16 +1,3 @@
-# Decisoes de Arquitetura (ADR)
-
-Registro das decisoes importantes tomadas no projeto e o **porque** de
-cada uma. O objetivo e preservar o raciocinio para quem (humano ou IA)
-retomar o projeto sem o contexto da conversa original.
-
-Formato: cada decisao tem Contexto (o problema), Decisao (o que foi
-escolhido) e Consequencias (o que isso implica, inclusive trade-offs).
-
-Data de origem: 2026-07-07.
-
----
-
 ## ADR-01: Motor de classificacao trocavel (padrao de contrato)
 
 **Contexto.** A classificacao depende de um modelo de visao. Modelos
