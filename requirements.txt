@@ -1,0 +1,10 @@
+# Motor CLIP (fase 1)
+open_clip_torch>=2.24
+torch>=2.2
+Pillow>=10.0
+
+# Metadados (fase 2) -- requer o binario exiftool instalado no sistema
+PyExifTool>=0.5
+
+# Interface (fase 4)
+gradio>=4.0

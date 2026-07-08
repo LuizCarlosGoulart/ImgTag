@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Modelos CLIP baixados / caches
+.cache/
+*.pt
+*.bin
+
+# Saidas de teste / imagens locais
+/saida/
+/out/
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.tiff
+*.bmp
+!docs/**/*.png
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
