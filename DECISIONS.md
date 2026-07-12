@@ -24,6 +24,10 @@ conhece esse contrato. A escolha do motor concreto acontece no
 devolvesse scores em escalas diferentes, o limiar calibrado para o CLIP
 nao valeria para outro motor.
 
+> **Revisado pelo ADR-09.** A normalizacao 0.0-1.0 continua valendo, mas
+> no CLIP ela passou a ser via softmax (probabilidades), nao mapeamento
+> linear de cosseno.
+
 **Decisao.** O contrato obriga todo motor a devolver score em 0.0-1.0.
 No CLIP, a similaridade de cosseno (-1..1) e mapeada para 0..1.
 
@@ -134,6 +138,34 @@ aplicacao (copia + gravacao) so ocorre apos revisao.
 - Rapido de montar, tudo em Python.
 - O `app.py` atual e um esqueleto funcional; a edicao tag-a-tag no grid
   ainda sera refinada.
+
+---
+
+## ADR-09: Score do CLIP via softmax com temperatura (revisa ADR-02)
+
+**Contexto.** Na primeira validacao com fotos reais, todos os scores
+sairam espremidos entre 0.58 e 0.63. Causa: mapear a similaridade de
+cosseno crua (que vive numa faixa estreita, ~0.15-0.30) linearmente para
+0-1 comprime tudo numa banda minima. O limiar caia no meio do ruido e
+tags absurdas eram aceitas -- embora o *ranking* (tag de maior score)
+estivesse correto.
+
+**Decisao.** Trocar o mapeamento linear por **softmax sobre as tags**,
+com uma `temperature` ajustavel (default 0.05). E a forma canonica de
+usar CLIP para classificacao zero-shot: espalha os scores, separa sinal
+de ruido e produz probabilidades reais (somam 1 entre as tags). O limiar
+default caiu de 0.60 para 0.20.
+
+**Consequencias.**
+- Scores viram probabilidades: uma tag dominante fica bem acima de 0.20;
+  fotos multi-tag dividem a probabilidade entre as tags fortes.
+- `temperature` menor = mais decisivo (uma tag); maior = mais suave
+  (favorece multi-tag). Vira um botao de calibracao junto do limiar.
+- Continua respeitando o contrato (0.0-1.0), entao ADR-02 segue valido --
+  so muda *como* o CLIP normaliza.
+- Efeito colateral: como o softmax e sobre o conjunto de tags, adicionar
+  ou remover tags do tags.json muda os scores das demais (competem entre
+  si). Esperado para classificacao multi-classe.
 
 ---
 

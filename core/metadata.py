@@ -12,14 +12,54 @@ apps como Lightroom, digiKam e o Explorer do Windows reconhecem.
 
 from __future__ import annotations
 
+import os
+import shutil
 from pathlib import Path
+
+# Candidatos de instalacao do ExifTool no Windows quando ele nao esta no
+# PATH do processo atual (ex.: terminal aberto antes da instalacao).
+_WINDOWS_FALLBACKS = [
+    Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "ExifTool" / "ExifTool.exe",
+    Path(os.environ.get("ProgramFiles", "")) / "ExifTool" / "exiftool.exe",
+]
+
+
+def _find_exiftool() -> str:
+    """Localiza o executavel do ExifTool.
+
+    Ordem: variavel EXIFTOOL_EXECUTABLE -> PATH -> locais conhecidos de
+    instalacao no Windows. Assim o app funciona mesmo que o PATH do
+    terminal atual nao tenha sido atualizado apos a instalacao.
+    """
+    env = os.environ.get("EXIFTOOL_EXECUTABLE")
+    if env and Path(env).exists():
+        return env
+
+    found = shutil.which("exiftool") or shutil.which("ExifTool")
+    if found:
+        return found
+
+    for candidate in _WINDOWS_FALLBACKS:
+        if candidate.exists():
+            return str(candidate)
+
+    raise FileNotFoundError(
+        "ExifTool nao encontrado. Instale de https://exiftool.org e garanta "
+        "que esteja no PATH, ou defina a variavel EXIFTOOL_EXECUTABLE com o "
+        "caminho do executavel."
+    )
+
+
+def _helper():
+    """Cria um ExifToolHelper apontando para o executavel localizado."""
+    import exiftool
+
+    return exiftool.ExifToolHelper(executable=_find_exiftool())
 
 
 def read_keywords(image_path: Path) -> set[str]:
     """Le as keywords ja presentes no arquivo (XMP + IPTC), sem duplicatas."""
-    import exiftool
-
-    with exiftool.ExifToolHelper() as et:
+    with _helper() as et:
         meta = et.get_tags(
             [str(image_path)],
             tags=["XMP-dc:Subject", "IPTC:Keywords"],
@@ -48,8 +88,6 @@ def write_keywords(image_path: Path, new_tags: set[str]) -> set[str]:
     Nunca remove nada. Devolve o conjunto final de keywords do arquivo.
     Se a uniao nao acrescenta nada novo, nao toca no arquivo.
     """
-    import exiftool
-
     existing = read_keywords(image_path)
     merged = existing | {t for t in new_tags}
 
@@ -57,7 +95,7 @@ def write_keywords(image_path: Path, new_tags: set[str]) -> set[str]:
         return existing  # Nada a fazer -- evita reescrever o arquivo a toa.
 
     ordered = sorted(merged)
-    with exiftool.ExifToolHelper() as et:
+    with _helper() as et:
         et.set_tags(
             [str(image_path)],
             tags={

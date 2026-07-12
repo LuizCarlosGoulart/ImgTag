@@ -15,7 +15,11 @@ from pathlib import Path
 DEFAULT_ENGINE = "clip"
 
 # Score minimo (0.0-1.0) para uma tag ser aplicada a uma foto.
-DEFAULT_THRESHOLD = 0.60
+# Com o softmax do CLIP (ADR-09) os scores sao probabilidades que somam 1
+# entre as tags. Numa foto com uma tag dominante, ela fica bem acima de
+# 0.20; fotos genuinamente multi-tag dividem a probabilidade, entao 0.20
+# ainda captura duas tags fortes. Ajuste conforme seus resultados.
+DEFAULT_THRESHOLD = 0.20
 
 # "copy" (duplica os bytes) ou "hardlink" (compartilha, economiza disco).
 DEFAULT_ORGANIZE_MODE = "copy"
